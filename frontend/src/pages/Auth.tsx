@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { Header, Footer } from "@/components";
 import { Film, Mail, Lock, User } from "lucide-react";
-import { APP_NAME } from "@/lib/constants";
+import { APP_NAME, API_BASE_URL } from "@/lib/constants";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
 import { FaFacebook } from "react-icons/fa";
@@ -40,7 +40,7 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/api/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -71,7 +71,7 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/api/auth/register", {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -99,7 +99,7 @@ const Auth = () => {
 
   const handleGoogleAuth = () => {
     const popup = window.open(
-      "https://accounts.google.com/o/oauth2/auth?client_id=751047087683-kd88h5t67glb9c12b2g12svtr9a3a4co.apps.googleusercontent.com&redirect_uri=http://localhost:8080/emotions&response_type=token&scope=email%20profile",
+      `https://accounts.google.com/o/oauth2/auth?client_id=751047087683-kd88h5t67glb9c12b2g12svtr9a3a4co.apps.googleusercontent.com&redirect_uri=${window.location.origin}/emotions&response_type=token&scope=email%20profile`,
       "_self"
     );
 

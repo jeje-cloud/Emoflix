@@ -34,7 +34,7 @@ const Index = () => {
   }, []);
 
   const handleGoogleAuth = () => {
-    window.open("https://accounts.google.com/o/oauth2/auth?client_id=751047087683-kd88h5t67glb9c12b2g12svtr9a3a4co.apps.googleusercontent.com&redirect_uri=http://localhost:8080&response_type=token&scope=email%20profile", "_self");
+    window.open(`https://accounts.google.com/o/oauth2/auth?client_id=751047087683-kd88h5t67glb9c12b2g12svtr9a3a4co.apps.googleusercontent.com&redirect_uri=${window.location.origin}&response_type=token&scope=email%20profile`, "_self");
   };
 
   return (

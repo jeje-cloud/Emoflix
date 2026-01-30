@@ -1,4 +1,5 @@
 
+import { APP_NAME, API_BASE_URL } from "@/lib/constants";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header, Footer, HistoryItem } from "@/components";
@@ -60,7 +61,7 @@ const Dashboard = () => {
       setIsLoading(true);
       try {
         const userEmail = localStorage.getItem('userEmail');
-        const response = await fetch(`http://localhost:3000/api/auth/history?email=${userEmail}`);
+        const response = await fetch(`${API_BASE_URL}/api/auth/history?email=${userEmail}`);
         
         if (!response.ok) throw new Error('Failed to fetch history');
         
@@ -82,7 +83,7 @@ const Dashboard = () => {
     const handleDeleteItem = async (id: string) => {
       try {
         const userEmail = localStorage.getItem('userEmail');
-        const response = await fetch(`http://localhost:3000/api/auth/history/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/auth/history/${id}`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: userEmail })
@@ -109,7 +110,7 @@ const Dashboard = () => {
   const handleClearHistory = async () => {
     try {
       const userEmail = localStorage.getItem('userEmail');
-      const response = await fetch('http://localhost:3000/api/auth/history', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/history`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: userEmail })

@@ -62,3 +62,4 @@ export const EMOTIONS: Record<string, EmotionDetails> = {
 
 export const APP_NAME = 'EmoFlix';
 export const APP_DESCRIPTION = 'Discover movies that match your mood';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';

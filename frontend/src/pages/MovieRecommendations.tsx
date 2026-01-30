@@ -1,3 +1,4 @@
+import { APP_NAME, API_BASE_URL } from "@/lib/constants";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -119,7 +120,7 @@ const MovieRecommendation = () => {
       const userEmail = localStorage.getItem('userEmail');
       const selectedMovies = movies.filter(movie => clickedMovies.includes(movie.id));
       
-      const response = await fetch('http://localhost:3000/api/auth/history', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/history`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
