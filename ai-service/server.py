@@ -167,3 +167,10 @@ def detect_emotion_multi():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+@app.route("/", methods=["GET"])
+def health():
+    return {
+        "status": "AI service is running",
+        "service": "DeepFace + OpenCV",
+    }, 200
