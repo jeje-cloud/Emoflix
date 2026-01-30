@@ -1,3 +1,5 @@
+const API_URL = import.meta.env.VITE_API_URL;
+
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -111,71 +113,81 @@ const EmotionDetection = () => {
     return frames;
   };
 
-  const sendMultipleImagesToServer = async (images: string[]) => {
-    try {
-      console.log(`Sending ${images.length} images to emotion detection API...`);
-      const response = await fetch("http://localhost:5000/detect-emotion-multi", {
+ const sendMultipleImagesToServer = async (images: string[]) => {
+  try {
+    console.log(`Sending ${images.length} images to emotion detection API...`);
+
+    const response = await fetch(
+      `${API_URL}/api/emotion/detect-emotion-multi`,
+      {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ images }),
-      });
-      const data = await response.json();
-      console.log("API Response:", data);
-      
-      if (data.error) {
-        console.error("Emotion detection error:", data.error);
-        // Fallback to single image detection
-        if (images.length > 0) {
-          await sendImageToServer(images[images.length - 1]);
-          return;
-        }
-        alert("Could not detect emotion. Please try again with better lighting and face the camera directly.");
-      } else if (data.emotion) {
-        // Convert DeepFace emotion to UI emotion name
-        const uiEmotion = DEEPFACE_TO_UI_EMOTION[data.emotion] || data.emotion;
-        console.log("Detected emotion:", data.emotion, "-> UI emotion:", uiEmotion);
-        console.log("Votes:", data.votes);
-        setSelectedEmotion(uiEmotion);
-        fetchMovies(data.emotion); // Use original DeepFace emotion for genre lookup
       }
-    } catch (error) {
-      console.error("Error detecting emotion:", error);
-      alert("Failed to connect to emotion detection server. Make sure the Python server is running on port 5000.");
-    } finally {
-      setIsUsingCamera(false);
-      setIsLoading(false);
+    );
+
+    const data = await response.json();
+    console.log("API Response:", data);
+
+    if (data.error) {
+      console.error("Emotion detection error:", data.error);
+      if (images.length > 0) {
+        await sendImageToServer(images[images.length - 1]);
+        return;
+      }
+      alert(
+        "Could not detect emotion. Please try again with better lighting and face the camera directly."
+      );
+    } else if (data.emotion) {
+      const uiEmotion = DEEPFACE_TO_UI_EMOTION[data.emotion] || data.emotion;
+      setSelectedEmotion(uiEmotion);
+      fetchMovies(data.emotion);
     }
-  };
+  } catch (error) {
+    console.error("Error detecting emotion:", error);
+    alert("Failed to connect to backend emotion service.");
+  } finally {
+    setIsUsingCamera(false);
+    setIsLoading(false);
+  }
+};
+
 
   const sendImageToServer = async (imageData: string) => {
-    try {
-      console.log("Sending image to emotion detection API...");
-      const response = await fetch("http://localhost:5000/detect-emotion", {
+  try {
+    console.log("Sending image to emotion detection API...");
+
+    const response = await fetch(
+      `${API_URL}/api/emotion/detect-emotion`,
+      {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: imageData }),
-      });
-      const data = await response.json();
-      console.log("API Response:", data);
-      
-      if (data.error) {
-        console.error("Emotion detection error:", data.error);
-        alert("Could not detect emotion. Please try again with better lighting and face the camera directly.");
-      } else if (data.emotion) {
-        // Convert DeepFace emotion to UI emotion name
-        const uiEmotion = DEEPFACE_TO_UI_EMOTION[data.emotion] || data.emotion;
-        console.log("Detected emotion:", data.emotion, "-> UI emotion:", uiEmotion);
-        setSelectedEmotion(uiEmotion);
-        fetchMovies(data.emotion); // Use original DeepFace emotion for genre lookup
       }
-    } catch (error) {
-      console.error("Error detecting emotion:", error);
-      alert("Failed to connect to emotion detection server. Make sure the Python server is running on port 5000.");
-    } finally {
-      setIsUsingCamera(false);
-      setIsLoading(false);
+    );
+
+    const data = await response.json();
+    console.log("API Response:", data);
+
+    if (data.error) {
+      console.error("Emotion detection error:", data.error);
+      alert(
+        "Could not detect emotion. Please try again with better lighting and face the camera directly."
+      );
+    } else if (data.emotion) {
+      const uiEmotion = DEEPFACE_TO_UI_EMOTION[data.emotion] || data.emotion;
+      setSelectedEmotion(uiEmotion);
+      fetchMovies(data.emotion);
     }
-  };
+  } catch (error) {
+    console.error("Error detecting emotion:", error);
+    alert("Failed to connect to backend emotion service.");
+  } finally {
+    setIsUsingCamera(false);
+    setIsLoading(false);
+  }
+};
+
 
   const fetchMovies = async (emotion: string) => {
     const genreId = EMOTION_GENRE_MAP[emotion] || 35; // Default to Comedy
