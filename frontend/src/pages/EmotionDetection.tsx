@@ -7,14 +7,37 @@ import { Camera, ChevronRight } from "lucide-react";
 
 const TMDB_API_KEY =
   "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlZTJhYTBjODE1NTQzNzkxNjIyMmIxZmYyOWE3ZGI4NiIsIm5iZiI6MTc0MDkyODAzOS41MTIsInN1YiI6IjY3YzQ3NDI3MTExY2RkNGVkOGI0YWUyMyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.nmjaNuIPThzM0BrtWckOXBERsIELOoWImWjXHQ9mxqA";
+// DeepFace returns: happy, sad, angry, fear, surprise, neutral, disgust
 const EMOTION_GENRE_MAP: Record<string, number> = {
   happy: 35, // Comedy
   sad: 18, // Drama
   angry: 28, // Action
-  surprised: 27, // Horror
-  neutral: 878, // Romance
-  fearful: 9648, // Mystery
-  disgusted: 99, // Documentary
+  surprise: 27, // Horror (DeepFace returns 'surprise' not 'surprised')
+  neutral: 878, // Sci-Fi
+  fear: 9648, // Mystery (DeepFace returns 'fear' not 'fearful')
+  disgust: 99, // Documentary (DeepFace returns 'disgust' not 'disgusted')
+};
+
+// Map DeepFace emotion names to UI emotion names
+const DEEPFACE_TO_UI_EMOTION: Record<string, string> = {
+  happy: "happy",
+  sad: "sad",
+  angry: "angry",
+  surprise: "surprised",
+  neutral: "neutral",
+  fear: "fearful",
+  disgust: "disgusted",
+};
+
+// Map UI emotion names to DeepFace emotion names (for genre lookup)
+const UI_TO_DEEPFACE_EMOTION: Record<string, string> = {
+  happy: "happy",
+  sad: "sad",
+  angry: "angry",
+  surprised: "surprise",
+  neutral: "neutral",
+  fearful: "fear",
+  disgusted: "disgust",
 };
 
 const EmotionDetection = () => {
@@ -48,27 +71,106 @@ const EmotionDetection = () => {
     if (videoRef.current && canvasRef.current) {
       const context = canvasRef.current.getContext("2d");
       if (context) {
-        context.drawImage(videoRef.current, 0, 0, 640, 480);
-        const imageData = canvasRef.current.toDataURL("image/jpeg");
-        sendImageToServer(imageData);
+        // Check if video has valid dimensions
+        const videoWidth = videoRef.current.videoWidth;
+        const videoHeight = videoRef.current.videoHeight;
+        
+        if (videoWidth === 0 || videoHeight === 0) {
+          console.error("Video not ready yet - dimensions are 0");
+          return null;
+        }
+        
+        // Set canvas dimensions to match video
+        canvasRef.current.width = videoWidth;
+        canvasRef.current.height = videoHeight;
+        
+        context.drawImage(videoRef.current, 0, 0, videoWidth, videoHeight);
+        return canvasRef.current.toDataURL("image/jpeg", 0.9);
       }
+    }
+    console.error("Video or canvas ref not available");
+    return null;
+  };
+
+  // Capture multiple frames for better accuracy
+  const captureMultipleFrames = async (stream: MediaStream) => {
+    const frames: string[] = [];
+    const numFrames = 3; // Capture 3 frames for faster processing
+    const intervalMs = 500; // 500ms between frames (1.5 seconds total)
+    
+    for (let i = 0; i < numFrames; i++) {
+      await new Promise(resolve => setTimeout(resolve, intervalMs));
+      const frame = captureImage();
+      if (frame) {
+        frames.push(frame);
+        console.log(`Captured frame ${i + 1}/${numFrames}`);
+      }
+    }
+    
+    stream.getTracks().forEach((track) => track.stop());
+    return frames;
+  };
+
+  const sendMultipleImagesToServer = async (images: string[]) => {
+    try {
+      console.log(`Sending ${images.length} images to emotion detection API...`);
+      const response = await fetch("http://localhost:5000/detect-emotion-multi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ images }),
+      });
+      const data = await response.json();
+      console.log("API Response:", data);
+      
+      if (data.error) {
+        console.error("Emotion detection error:", data.error);
+        // Fallback to single image detection
+        if (images.length > 0) {
+          await sendImageToServer(images[images.length - 1]);
+          return;
+        }
+        alert("Could not detect emotion. Please try again with better lighting and face the camera directly.");
+      } else if (data.emotion) {
+        // Convert DeepFace emotion to UI emotion name
+        const uiEmotion = DEEPFACE_TO_UI_EMOTION[data.emotion] || data.emotion;
+        console.log("Detected emotion:", data.emotion, "-> UI emotion:", uiEmotion);
+        console.log("Votes:", data.votes);
+        setSelectedEmotion(uiEmotion);
+        fetchMovies(data.emotion); // Use original DeepFace emotion for genre lookup
+      }
+    } catch (error) {
+      console.error("Error detecting emotion:", error);
+      alert("Failed to connect to emotion detection server. Make sure the Python server is running on port 5000.");
+    } finally {
+      setIsUsingCamera(false);
+      setIsLoading(false);
     }
   };
 
   const sendImageToServer = async (imageData: string) => {
     try {
+      console.log("Sending image to emotion detection API...");
       const response = await fetch("http://localhost:5000/detect-emotion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: imageData }),
       });
       const data = await response.json();
-      if (data.emotion) {
-        setSelectedEmotion(data.emotion);
-        fetchMovies(data.emotion);
+      console.log("API Response:", data);
+      
+      if (data.error) {
+        console.error("Emotion detection error:", data.error);
+        alert("Could not detect emotion. Please try again with better lighting and face the camera directly.");
+      } else if (data.emotion) {
+        // Convert DeepFace emotion to UI emotion name
+        const uiEmotion = DEEPFACE_TO_UI_EMOTION[data.emotion] || data.emotion;
+        console.log("Detected emotion:", data.emotion, "-> UI emotion:", uiEmotion);
+        setSelectedEmotion(uiEmotion);
+        fetchMovies(data.emotion); // Use original DeepFace emotion for genre lookup
       }
     } catch (error) {
       console.error("Error detecting emotion:", error);
+      alert("Failed to connect to emotion detection server. Make sure the Python server is running on port 5000.");
     } finally {
       setIsUsingCamera(false);
       setIsLoading(false);
@@ -100,11 +202,23 @@ const EmotionDetection = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        // Wait for video to actually start playing before capturing
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play();
+        };
       }
-      setTimeout(() => {
-        captureImage();
-        stream.getTracks().forEach((track) => track.stop());
-      }, 3000);
+      // Wait for video to stabilize, then capture multiple frames
+      setTimeout(async () => {
+        console.log("Starting multi-frame capture for better accuracy...");
+        const frames = await captureMultipleFrames(stream);
+        if (frames.length > 0) {
+          await sendMultipleImagesToServer(frames);
+        } else {
+          alert("Could not capture any frames. Please try again.");
+          setIsUsingCamera(false);
+          setIsLoading(false);
+        }
+      }, 2000); // 2 second initial delay, then 2 more seconds for 5 frame captures
     } catch (error) {
       console.error("Error accessing camera:", error);
       setIsUsingCamera(false);
@@ -114,7 +228,9 @@ const EmotionDetection = () => {
 
   const handleContinue = () => {
     if (selectedEmotion) {
-      const emotionId = EMOTION_GENRE_MAP[selectedEmotion]; // Get the corresponding emotionId
+      // Convert UI emotion to DeepFace emotion for genre lookup
+      const deepfaceEmotion = UI_TO_DEEPFACE_EMOTION[selectedEmotion] || selectedEmotion;
+      const emotionId = EMOTION_GENRE_MAP[deepfaceEmotion]; // Get the corresponding emotionId
       navigate(`/recommendations/${emotionId}`, {
         state: { emotion: selectedEmotion, emotionId: emotionId },
       });
