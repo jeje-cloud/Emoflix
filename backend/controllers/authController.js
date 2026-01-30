@@ -1,4 +1,4 @@
-const Test = require('../models/User');
+const User = require('../models/User');
 const { generateToken } = require('../utils/generateToken');
 
 const registerUser = async (req, res) => {
@@ -6,13 +6,13 @@ const registerUser = async (req, res) => {
 
     try {
         // Check if user already exists
-        const userExists = await Test.findOne({ email });
+        const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
         // Create user with hashed password
-        const user = await Test.create({ name, email, password });
+        const user = await User.create({ name, email, password });
 
         if (user) {
             res.status(201).json({
@@ -33,7 +33,7 @@ const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const user = await Test.findOne({ email });
+        const user = await User.findOne({ email });
 
         // Check if user exists and password matches
         if (!user || !(await user.matchPassword(password))) {
