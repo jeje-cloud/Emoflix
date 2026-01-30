@@ -164,13 +164,15 @@ def detect_emotion_multi():
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({"error": str(e)})
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
-
-@app.route("/", methods=["GET"])
+    
+    @app.route("/", methods=["GET"])
 def health():
     return {
         "status": "AI service is running",
         "service": "DeepFace + OpenCV",
     }, 200
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
+
