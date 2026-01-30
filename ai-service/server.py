@@ -165,7 +165,7 @@ def detect_emotion_multi():
         print(f"Error: {str(e)}")
         return jsonify({"error": str(e)})
     
-    @app.route("/", methods=["GET"])
+@app.route("/", methods=["GET"])
 def health():
     return {
         "status": "AI service is running",
