@@ -108,7 +108,7 @@ emoflix-frontend/
    # or
    npm start # Production
    ```
-   The API will be available at http://localhost:5000.
+   
 
 ### Frontend Setup
 
@@ -137,7 +137,7 @@ emoflix-frontend/
    bun dev
    ```
    
-The application will be available at http://localhost:5173.
+
 
 ## 🔧 Technology Stack
 
