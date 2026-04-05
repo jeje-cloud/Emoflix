@@ -45,24 +45,34 @@ def preprocess_image(image):
 def analyze_single_image(image):
     """Analyze a single image and return emotion scores"""
     processed_image = preprocess_image(image)
-    
+
     try:
-        # Use opencv for faster face detection
         analysis = DeepFace.analyze(
-            processed_image, 
-            actions=["emotion"], 
-            enforce_detection=True,
+            processed_image,
+            actions=["emotion"],
+            enforce_detection=False,   # ✅ ALWAYS FALSE
             detector_backend='opencv'
         )
-    except:
-        # Fallback to no face detection enforcement
-        analysis = DeepFace.analyze(
-            processed_image, 
-            actions=["emotion"], 
-            enforce_detection=False
-        )
-    
-    return analysis[0]["emotion"], analysis[0]["dominant_emotion"]
+
+        # Handle both list and dict response
+        if isinstance(analysis, list):
+            analysis = analysis[0]
+
+        return analysis["emotion"], analysis["dominant_emotion"]
+
+    except Exception as e:
+        print("DeepFace Error:", e)
+
+        # ✅ fallback: return neutral instead of failing
+        return {
+            "angry": 0,
+            "disgust": 0,
+            "fear": 0,
+            "happy": 0,
+            "sad": 0,
+            "surprise": 0,
+            "neutral": 100
+        }, "neutral"
 
 @app.route("/detect-emotion", methods=["POST"])
 def detect_emotion():
