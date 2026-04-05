@@ -4,7 +4,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
-
+const emotionRoutes = require('./routes/emotionRoutes');
 dotenv.config();
 
 const app = express();
@@ -16,12 +16,16 @@ connectDB();
 
 // CORS configuration (production-safe)
 app.use(cors({
-    origin: process.env.FRONTEND_URL || '*',
-    credentials: true,
+  origin: process.env.FRONTEND_URL,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
 }));
+
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/emotion', emotionRoutes);
 
 // Health check route
 app.get('/', (req, res) => {
